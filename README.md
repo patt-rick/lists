@@ -32,7 +32,7 @@ Tickd lets you keep as many lists as you like — groceries, to-dos, packing, re
 - **Keyboard friendly** — press Enter to add an item or finish editing; focus stays where you are after each action.
 - **Safe with two tabs open** — a change in one tab shows up in the other instead of being overwritten.
 - **Works on phones** — the layout stacks on narrow screens.
-- **Light and dark themes** — follows your device; the sun/moon button in the sidebar overrides it and remembers your choice (pick your device's theme again to go back to following it).
+- **Light and dark themes** — follows your device; the sun/moon button at the top right of the page overrides it and remembers your choice (pick your device's theme again to go back to following it).
 
 ## Tech stack
 
