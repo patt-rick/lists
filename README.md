@@ -15,6 +15,8 @@ A simple, fast list-keeping app in a single HTML file.
 
 ![Tickd screenshot](screenshot.png)
 
+![Tickd in dark mode](screenshot-dark.png)
+
 ## Overview
 
 Tickd lets you keep as many lists as you like — groceries, to-dos, packing, reading — and tick items off as you go. Everything is saved in your browser automatically, so your lists are still there next time you open the page. There is nothing to install and no server.
@@ -29,15 +31,16 @@ Tickd lets you keep as many lists as you like — groceries, to-dos, packing, re
 - **Keyboard friendly** — press Enter to add an item or finish editing; focus stays where you are after each action.
 - **Safe with two tabs open** — a change in one tab shows up in the other instead of being overwritten.
 - **Works on phones** — the layout stacks on narrow screens.
+- **Light and dark themes** — follows your device; the sun/moon button in the sidebar overrides it and remembers your choice (pick your device's theme again to go back to following it).
 
 ## Tech stack
 
 | Layer | Choice |
 | --- | --- |
 | Markup | HTML5 |
-| Styling | Plain CSS (custom properties, grid) |
+| Styling | Plain CSS (custom properties, grid); dark theme via `:root[data-theme="dark"]` |
 | Logic | Vanilla JavaScript, no dependencies |
-| Storage | Browser `localStorage` (key `lists-app:v1`) |
+| Storage | Browser `localStorage` (keys `lists-app:v1` for lists, `lists-app:theme` for a chosen theme) |
 
 ## Project structure
 
@@ -45,7 +48,8 @@ Tickd lets you keep as many lists as you like — groceries, to-dos, packing, re
 lists/
 ├── index.html       # the whole app: markup, styles and script
 ├── logo.png         # app logo and browser-tab icon
-├── screenshot.png   # used in this README
+├── screenshot.png       # used in this README (light)
+├── screenshot-dark.png  # used in this README (dark)
 └── README.md
 ```
 

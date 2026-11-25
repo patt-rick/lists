@@ -2,11 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>
+    // Pick the theme before the page paints, so it never flashes the wrong colours.
+    (() => {
+      let saved = null;
+      try { saved = localStorage.getItem("lists-app:theme"); } catch { /* storage blocked: follow the device */ }
+      document.documentElement.dataset.theme = saved === "light" || saved === "dark" ? saved
+        : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tickd</title>
   <link rel="icon" type="image/png" href="logo.png">
   <style>
     :root {
+      color-scheme: light;
       --bg: #fbe3ee;
       --panel: #fff0f6;
       --ink: #2a1f25;
@@ -16,8 +26,25 @@
       --accent-strong: #be185d;
       --accent-ink: #9d174d;
       --accent-soft: #f9d0e3;
+      --on-accent: #ffffff;
       --danger: #b42318;
+      --danger-soft: #fbd5d0;
       --radius: 10px;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #1a1116;
+      --panel: #24171e;
+      --ink: #f6e8ef;
+      --muted: #bfa3b1;
+      --line: #45303b;
+      --accent: #f472b6;
+      --accent-strong: #f9a8d4;
+      --accent-ink: #fbcfe8;
+      --accent-soft: #4a1f35;
+      --on-accent: #2a0f1d;
+      --danger: #fca5a5;
+      --danger-soft: #4a1c1c;
     }
     * { box-sizing: border-box; }
     body {
@@ -84,10 +111,10 @@
       background: var(--panel);
     }
     .btn:hover { background: var(--bg); }
-    .btn.primary { background: var(--accent); border-color: var(--accent-strong); color: #fff; font-weight: 600; }
+    .btn.primary { background: var(--accent); border-color: var(--accent-strong); color: var(--on-accent); font-weight: 600; }
     .btn.primary:hover { background: var(--accent-strong); }
     .btn.danger { color: var(--danger); }
-    .btn.danger:hover { background: #fbd5d0; }
+    .btn.danger:hover { background: var(--danger-soft); }
 
     /* Main */
     .main { padding: 32px clamp(16px, 5vw, 56px); max-width: 820px; width: 100%; }
@@ -142,9 +169,16 @@
       opacity: 0;
     }
     .item:hover .icon-btn, .icon-btn:focus { opacity: 1; }
-    .icon-btn:hover { background: #fbd5d0; color: var(--danger); }
+    .icon-btn:hover { background: var(--danger-soft); color: var(--danger); }
+    /* The theme toggle borrows the icon-button shape but is always visible and never turns red. */
+    .theme-toggle { margin-left: auto; opacity: 1; display: grid; place-items: center; }
+    .theme-toggle:hover { background: var(--bg); color: var(--ink); }
+    .theme-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    /* Shows the moon in light mode and the sun in dark mode: the theme you'd switch to. */
+    .theme-toggle .sun, :root[data-theme="dark"] .theme-toggle .moon { display: none; }
+    :root[data-theme="dark"] .theme-toggle .sun { display: block; }
 
-    .warning { background: #fbd5d0; color: var(--danger); border-radius: 8px; padding: 10px 12px; margin: 0 0 16px; }
+    .warning { background: var(--danger-soft); color: var(--danger); border-radius: 8px; padding: 10px 12px; margin: 0 0 16px; }
     .empty { color: var(--muted); text-align: center; padding: 40px 0; }
     .footer { display: flex; justify-content: flex-end; margin-top: 12px; }
 
@@ -158,7 +192,13 @@
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="brand"><img src="logo.png" alt="">Tickd</div>
+      <div class="brand">
+        <img src="logo.png" alt="">Tickd
+        <button type="button" class="icon-btn theme-toggle" id="theme-toggle" aria-label="Dark theme" title="Dark theme" aria-pressed="false">
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </div>
       <ul class="lists" id="lists"></ul>
       <form class="new-list" id="new-list-form">
         <input type="text" id="new-list-name" placeholder="New list" aria-label="New list name" maxlength="80">
@@ -347,8 +387,46 @@
       render(focusSelector);
     }
 
-    // Another tab changed the lists: pick up its copy instead of overwriting it later.
+    // Theme: follows the device unless you've picked one with the toggle.
+    // The head script already set data-theme before paint; this keeps it (and the button) in sync.
+    const THEME_KEY = "lists-app:theme";
+    const isTheme = v => v === "light" || v === "dark";
+    const darkQuery = matchMedia("(prefers-color-scheme: dark)");
+    const deviceTheme = () => darkQuery.matches ? "dark" : "light";
+    const $themeToggle = document.getElementById("theme-toggle");
+
+    // Kept in memory as well as in storage, so the toggle still works when storage is blocked.
+    let chosenTheme = null;
+    try { const saved = localStorage.getItem(THEME_KEY); if (isTheme(saved)) chosenTheme = saved; } catch { /* storage blocked */ }
+
+    function applyTheme() {
+      const dark = (chosenTheme ?? deviceTheme()) === "dark";
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+      $themeToggle.setAttribute("aria-pressed", String(dark)); // the CSS swaps the moon/sun icon
+    }
+
+    $themeToggle.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      // Picking the device's own theme goes back to following the device.
+      chosenTheme = next === deviceTheme() ? null : next;
+      try {
+        if (chosenTheme) localStorage.setItem(THEME_KEY, chosenTheme);
+        else localStorage.removeItem(THEME_KEY);
+      } catch { /* storage blocked: the choice lasts until this tab closes */ }
+      applyTheme();
+    });
+
+    darkQuery.addEventListener("change", applyTheme);
+    applyTheme();
+
     window.addEventListener("storage", e => {
+      // Another tab changed the theme: follow it.
+      if (e.key === THEME_KEY) {
+        chosenTheme = isTheme(e.newValue) ? e.newValue : null;
+        applyTheme();
+        return;
+      }
+      // Another tab changed the lists: pick up its copy instead of overwriting it later.
       if (e.key !== STORAGE_KEY) return;
       state = load();
       render();
