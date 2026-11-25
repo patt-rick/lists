@@ -46,8 +46,8 @@ Tickd lets you keep as many lists as you like — groceries, to-dos, packing, re
 
 ```
 lists/
-├── index.html       # the whole app: markup, styles and script
-├── logo.png         # app logo and browser-tab icon
+├── index.html           # the whole app: markup, styles and script
+├── logo.png             # app logo and browser-tab icon
 ├── screenshot.png       # used in this README (light)
 ├── screenshot-dark.png  # used in this README (dark)
 └── README.md
