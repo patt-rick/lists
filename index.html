@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tickd</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+    :root {
+      --bg: #f5f8fc;
+      --panel: #ffffff;
+      --ink: #1f2328;
+      --muted: #6b7280;
+      --line: #e2e7ef;
+      --accent: #2563eb;
+      --accent-strong: #1d4ed8;
+      --accent-ink: #1e40af;
+      --accent-soft: #dbeafe;
+      --danger: #b42318;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    button, input { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; padding: 0 8px; }
+    .brand img { width: 28px; height: 28px; }
+    .lists { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+    .list-link {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      text-align: left;
+    }
+    .list-link:hover { background: var(--bg); }
+    .list-link[aria-current="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+    .list-link .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .count { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+    .new-list { display: flex; gap: 6px; margin-top: 4px; }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    input[type="text"]:focus { outline: 2px solid var(--accent-strong); outline-offset: -1px; border-color: transparent; }
+
+    .btn {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .btn:hover { background: var(--bg); }
+    .btn.primary { background: var(--accent); border-color: var(--accent-strong); color: #fff; font-weight: 600; }
+    .btn.primary:hover { background: var(--accent-strong); }
+    .btn.danger { color: var(--danger); }
+    .btn.danger:hover { background: #fdecea; }
+
+    /* Main */
+    .main { padding: 32px clamp(16px, 5vw, 56px); max-width: 820px; width: 100%; }
+    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    input.title {
+      flex: 1;
+      min-width: 0;
+      font-size: 26px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 2px 6px;
+      margin-left: -7px;
+      background: transparent;
+    }
+    .title:hover { border-color: var(--line); }
+    .title:focus { outline: 2px solid var(--accent-strong); }
+    .summary { color: var(--muted); margin: 0 0 20px; }
+
+    .add-item { display: flex; gap: 8px; margin-bottom: 16px; }
+
+    .items { list-style: none; margin: 0; padding: 0; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+    .items:empty { display: none; }
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .item:last-child { border-bottom: 0; }
+    .item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+    .item .text {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 3px 6px;
+      background: transparent;
+    }
+    .item .text:focus { outline: 2px solid var(--accent-strong); }
+    .item.done .text { color: var(--muted); text-decoration: line-through; }
+    .icon-btn {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      font-size: 18px;
+      line-height: 1;
+      opacity: 0;
+    }
+    .item:hover .icon-btn, .icon-btn:focus { opacity: 1; }
+    .icon-btn:hover { background: #fdecea; color: var(--danger); }
+
+    .warning { background: #fdecea; color: var(--danger); border-radius: 8px; padding: 10px 12px; margin: 0 0 16px; }
+    .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+    .footer { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+    @media (max-width: 700px) {
+      .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+      .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+      .icon-btn { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><img src="logo.png" alt="">Tickd</div>
+      <ul class="lists" id="lists"></ul>
+      <form class="new-list" id="new-list-form">
+        <input type="text" id="new-list-name" placeholder="New list" aria-label="New list name" maxlength="80">
+        <button class="btn" type="submit">Add</button>
+      </form>
+    </aside>
+
+    <div class="main">
+      <p class="warning" id="warning" role="alert" hidden>Couldn't save — your browser is blocking or out of storage. Changes will be lost when you close this tab.</p>
+      <div id="main"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "lists-app:v1";
+
+    const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+
+    const isText = v => typeof v === "string" && v.trim() !== "";
+
+    // Keeps only well-formed lists and items, so damaged saved data can never break the page.
+    function clean(saved) {
+      const lists = (Array.isArray(saved?.lists) ? saved.lists : [])
+        .filter(l => l && isText(l.name))
+        .map(l => ({
+          id: isText(l.id) ? l.id : uid(),
+          name: l.name,
+          items: (Array.isArray(l.items) ? l.items : [])
+            .filter(i => i && isText(i.text))
+            .map(i => ({ id: isText(i.id) ? i.id : uid(), text: i.text, done: i.done === true })),
+        }));
+      return { lists, activeId: typeof saved?.activeId === "string" ? saved.activeId : null };
+    }
+
+    function load() {
+      let raw = null;
+      try { raw = localStorage.getItem(STORAGE_KEY); } catch { /* storage blocked: start fresh */ }
+      if (raw !== null) {
+        try { return clean(JSON.parse(raw)); } catch { /* unreadable: start fresh */ }
+      }
+      const first = { id: uid(), name: "My list", items: [] };
+      return { lists: [first], activeId: first.id };
+    }
+
+    let state = load();
+    const activeList = () => state.lists.find(l => l.id === state.activeId) || state.lists[0] || null;
+
+    const $lists = document.getElementById("lists");
+    const $main = document.getElementById("main");
+    const $warning = document.getElementById("warning");
+    const $newListForm = document.getElementById("new-list-form");
+    const $newListName = document.getElementById("new-list-name");
+
+    function save() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        $warning.hidden = true;
+      } catch {
+        $warning.hidden = false;
+      }
+    }
+
+    // Enter finishes an edit, but not while an IME (e.g. Japanese input) is still composing.
+    const blurOnEnter = e => { if (e.key === "Enter" && !e.isComposing) e.target.blur(); };
+
+    // Saves typed text as it changes (no redraw, so the next click is never swallowed);
+    // an emptied field snaps back to the last saved text when you leave it.
+    function bindTextEdit(input, get, set, onSave = () => {}) {
+      input.addEventListener("input", () => {
+        const value = input.value.trim();
+        if (value) { set(value); save(); onSave(); }
+      });
+      input.addEventListener("blur", () => { input.value = get(); });
+      input.addEventListener("keydown", blurOnEnter);
+    }
+
+    // Builds an element; text is always set via textContent so user input is never parsed as HTML.
+    function el(tag, props = {}, ...children) {
+      const node = document.createElement(tag);
+      Object.assign(node, props);
+      node.append(...children);
+      return node;
+    }
+
+    function renderSidebar() {
+      const current = activeList();
+      $lists.replaceChildren(...state.lists.map(list => {
+        const left = list.items.filter(i => !i.done).length;
+        const btn = el("button", { className: "list-link", type: "button" },
+          el("span", { className: "name", textContent: list.name }),
+          el("span", { className: "count", textContent: left || "" })
+        );
+        btn.dataset.id = list.id;
+        btn.setAttribute("aria-current", String(list === current));
+        btn.addEventListener("click", () => {
+          state.activeId = list.id;
+          update(`.list-link[data-id="${CSS.escape(list.id)}"]`);
+        });
+        return el("li", {}, btn);
+      }));
+    }
+
+    function renderMain() {
+      const list = activeList();
+      if (!list) {
+        $main.replaceChildren(el("p", { className: "empty", textContent: "No lists yet. Create one on the left." }));
+        return;
+      }
+
+      const total = list.items.length;
+      const done = list.items.filter(i => i.done).length;
+
+      const title = el("input", { className: "title", type: "text", value: list.name, maxLength: 80 });
+      title.setAttribute("aria-label", "List name");
+      bindTextEdit(title, () => list.name, v => { list.name = v; }, renderSidebar);
+
+      const deleteList = el("button", { className: "btn danger", type: "button", textContent: "Delete list" });
+      deleteList.addEventListener("click", () => {
+        if (!confirm(`Delete "${list.name}" and its ${list.items.length} item(s)?`)) return;
+        state.lists = state.lists.filter(l => l !== list);
+        state.activeId = state.lists[0]?.id ?? null;
+        update("#new-list-name");
+      });
+
+      const input = el("input", { type: "text", placeholder: "Add an item…", maxLength: 200 });
+      input.setAttribute("aria-label", "New item");
+      const addForm = el("form", { className: "add-item" },
+        input,
+        el("button", { className: "btn primary", type: "submit", textContent: "Add" })
+      );
+      addForm.addEventListener("submit", e => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        list.items.push({ id: uid(), text, done: false });
+        update(".add-item input");
+      });
+
+      const items = el("ul", { className: "items" }, ...list.items.map(item => renderItem(list, item)));
+
+      const children = [
+        el("div", { className: "header" }, title, deleteList),
+        el("p", { className: "summary", textContent: total ? `${done} of ${total} done` : "Nothing here yet" }),
+        addForm,
+        items,
+      ];
+      if (!total) children.push(el("p", { className: "empty", textContent: "Add your first item above." }));
+      if (done) {
+        const clear = el("button", { className: "btn", type: "button", textContent: `Clear ${done} done` });
+        clear.addEventListener("click", () => { list.items = list.items.filter(i => !i.done); update(".add-item input"); });
+        children.push(el("div", { className: "footer" }, clear));
+      }
+      $main.replaceChildren(...children);
+    }
+
+    function renderItem(list, item) {
+      const check = el("input", { type: "checkbox", checked: item.done });
+      check.setAttribute("aria-label", `Mark "${item.text}" done`);
+      check.addEventListener("change", () => {
+        item.done = check.checked;
+        update(`.item[data-id="${CSS.escape(item.id)}"] input[type="checkbox"]`);
+      });
+
+      const text = el("input", { className: "text", type: "text", value: item.text, maxLength: 200 });
+      text.setAttribute("aria-label", "Item text");
+      bindTextEdit(text, () => item.text, v => { item.text = v; });
+
+      const remove = el("button", { className: "icon-btn", type: "button", textContent: "×", title: "Delete item" });
+      remove.setAttribute("aria-label", `Delete "${item.text}"`);
+      remove.addEventListener("click", () => { list.items = list.items.filter(i => i !== item); update(".add-item input"); });
+
+      const row = el("li", { className: "item" + (item.done ? " done" : "") }, check, text, remove);
+      row.dataset.id = item.id;
+      return row;
+    }
+
+    function render(focusSelector) {
+      renderSidebar();
+      renderMain();
+      if (focusSelector) document.querySelector(focusSelector)?.focus();
+    }
+
+    // Every change saves, redraws, and puts keyboard focus back where it belongs.
+    function update(focusSelector) {
+      save();
+      render(focusSelector);
+    }
+
+    // Another tab changed the lists: pick up its copy instead of overwriting it later.
+    window.addEventListener("storage", e => {
+      if (e.key !== STORAGE_KEY) return;
+      state = load();
+      render();
+    });
+
+    $newListForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const name = $newListName.value.trim();
+      if (!name) return;
+      const list = { id: uid(), name, items: [] };
+      state.lists.push(list);
+      state.activeId = list.id;
+      $newListName.value = "";
+      update(".add-item input");
+    });
+
+    update();
+  </script>
+</body>
+</html>
