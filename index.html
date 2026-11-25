@@ -108,7 +108,8 @@
     input[type="search"] { flex: none; -webkit-appearance: none; appearance: none; }
     input[type="text"]:focus, input[type="search"]:focus { outline: 2px solid var(--accent-strong); outline-offset: -1px; border-color: transparent; }
     .search-status { margin: -6px 8px 0; font-size: 13px; color: var(--muted); }
-    .search-status:empty { display: none; }
+    /* Stays in the page when empty (so screen readers announce its first update); only the gap is cancelled. */
+    .search-status:empty { margin-top: -12px; }
 
     .btn {
       padding: 8px 12px;
@@ -140,7 +141,7 @@
     }
     .title:hover { border-color: var(--line); }
     .title:focus { outline: 2px solid var(--accent-strong); }
-    h2.title { margin: 0 0 20px; padding: 2px 0; overflow-wrap: anywhere; }
+    h2.title { margin: 0 0 20px; padding: 2px 0; font-size: 26px; overflow-wrap: anywhere; }
     .summary { color: var(--muted); margin: 0 0 20px; }
 
     .add-item { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -289,6 +290,8 @@
     // Search text, kept in memory only. While it's set, the main area shows matches from every list.
     let query = "";
     function clearSearch() { $search.value = ""; query = ""; }
+    // Only writes when the text changes, so screen readers don't repeat an unchanged count.
+    function setSearchStatus(text) { if ($searchStatus.textContent !== text) $searchStatus.textContent = text; }
     const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
     function save() {
@@ -350,7 +353,7 @@
       const matches = state.lists.flatMap(list => list.items
         .filter(item => item.text.toLocaleLowerCase().includes(needle))
         .map(item => ({ list, item })));
-      $searchStatus.textContent = matches.length ? count(matches.length, "match", "matches") : "No matches";
+      setSearchStatus(matches.length ? count(matches.length, "match", "matches") : "No matches");
 
       const heading = el("h2", { className: "title", textContent: `Results for "${query}"` });
       if (!matches.length) {
@@ -375,7 +378,7 @@
 
     function renderMain() {
       if (query) { renderResults(); return; }
-      $searchStatus.textContent = "";
+      setSearchStatus("");
 
       const list = activeList();
       if (!list) {
@@ -519,6 +522,10 @@
       // Enter jumps to the first result (and closes the keyboard on phones).
       // preventDefault stops the same key press from also clicking the result it lands on.
       if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); $main.querySelector(".result")?.focus(); }
+    });
+    // Esc on a result also clears the search and goes back to the box.
+    $main.addEventListener("keydown", e => {
+      if (e.key === "Escape" && e.target.classList.contains("result")) { clearSearch(); renderMain(); $search.focus(); }
     });
 
     $newListForm.addEventListener("submit", e => {
