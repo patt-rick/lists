@@ -24,8 +24,9 @@ Tickd lets you keep as many lists as you like — groceries, to-dos, packing, re
 ## Features
 
 - **Multiple lists** — create, switch between, rename and delete lists from the sidebar.
-- **Items** — add, tick off, edit in place and delete items.
-- **Progress at a glance** — each list shows how many items are left; the open list shows "x of y done".
+- **Items** — add, tick off, edit in place, and delete with the × on each item (always visible).
+- **Search** — the box at the top of the sidebar finds items across all your lists and shows which list each one is in. Enter jumps to the first result, Esc clears, and clicking a result opens its list.
+- **Progress at a glance** — each list shows how many items are left, the open list shows "x of y done", and the sidebar shows a running total across all lists (e.g. "12 items · 4 done").
 - **Clear done** — remove every ticked item in one click.
 - **Saves automatically** — stored in the browser's `localStorage`; no account or backend.
 - **Keyboard friendly** — press Enter to add an item or finish editing; focus stays where you are after each action.
@@ -53,7 +54,7 @@ lists/
 └── README.md
 ```
 
-The script keeps one `state` object (`{ lists, activeId }`), and every change runs `update()`, which saves to `localStorage` and redraws the sidebar and the open list. All user text is inserted with `textContent`, never as HTML.
+The script keeps one `state` object (`{ lists, activeId }`), and every change runs `update()`, which saves to `localStorage` and redraws the sidebar and the open list. The search text is kept in memory only; while it's set, the main area shows matches instead of the open list. All user text is inserted with `textContent`, never as HTML.
 
 ## Getting started
 
